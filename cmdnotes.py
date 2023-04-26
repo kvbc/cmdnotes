@@ -4,6 +4,7 @@ import colorama
 from colorama import Fore, Style, Back
 import keyboard
 import sys
+import json
 
 sel = 0
 sel_isdir = False
@@ -13,6 +14,9 @@ size = 0
 open_dirs = []
 notes = {}
 colors = {}
+
+def cls ():
+    os.system('cls' if os.name=='nt' else 'clear')
 
 def clear_input ():
     for i in range(100):
@@ -77,8 +81,17 @@ def printdir (dir_path = '.', indent = '', i = 0):
 def update ():
     global size
     clear_input()
-    os.system('cls' if os.name=='nt' else 'clear')
+    cls()
     size = printdir()
+    print()
+    print(f'{Fore.WHITE}q     {Fore.LIGHTBLACK_EX} exit')
+    print(f'{Fore.WHITE}del   {Fore.LIGHTBLACK_EX} delete save')
+    print(f'{Fore.WHITE}w     {Fore.LIGHTBLACK_EX} up')
+    print(f'{Fore.WHITE}s     {Fore.LIGHTBLACK_EX} down')
+    print(f'{Fore.WHITE}e     {Fore.LIGHTBLACK_EX} edit note')
+    print(f'{Fore.WHITE}space {Fore.LIGHTBLACK_EX} expand/collapse folder')
+    print(f'{Fore.WHITE}1,2,3 {Fore.LIGHTBLACK_EX} set color')
+    print()
 
 def up ():
     global sel, editing
@@ -122,8 +135,24 @@ def set_color (color):
         colors[sel_path] = color
     update()
 
+def delete ():
+    global open_dirs, notes, colors
+    open_dirs = []
+    notes = {}
+    colors = {}
+    update()
+
 if __name__ == "__main__":
     colorama.init()
+
+    if os.path.exists('.cmdnotes.json'):
+        f = open('.cmdnotes.json')
+        data = json.load(f)
+        open_dirs = data['open_dirs']
+        notes = data['notes']
+        colors = data['colors']
+        f.close()
+
     update()
     keyboard.add_hotkey('e', edit)
     keyboard.add_hotkey('w', up)
@@ -132,5 +161,14 @@ if __name__ == "__main__":
     keyboard.add_hotkey('1', lambda: set_color(1))
     keyboard.add_hotkey('2', lambda: set_color(2))
     keyboard.add_hotkey('3', lambda: set_color(3))
+    keyboard.add_hotkey('del', delete)
+
     keyboard.wait('q')
+    cls()
     clear_input()
+    with open('.cmdnotes.json', 'w', encoding='utf-8') as f:
+        json.dump({
+            "colors": colors,
+            "open_dirs": open_dirs,
+            "notes": notes
+        }, f, ensure_ascii=False, indent=4)
